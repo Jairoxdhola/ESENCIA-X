@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import subprocess
 import urllib.request
 import ssl
 
@@ -40,6 +39,20 @@ def download(url, destino):
         print(f"       [X] {os.path.basename(destino)}: {e}")
         return False
 
+def apply_pending_update(here):
+    bat_new = os.path.join(here, "UPDATE.bat.new")
+    if os.path.exists(bat_new):
+        bat_old = os.path.join(here, "UPDATE.bat")
+        try:
+            os.replace(bat_new, bat_old)
+            try:
+                os.remove(bat_old + ":Zone.Identifier")
+            except OSError:
+                pass
+            print("       [OK] UPDATE.bat (from pending update)")
+        except OSError:
+            pass
+
 def main():
     print()
     print("    =========================================")
@@ -49,12 +62,7 @@ def main():
 
     here = os.path.dirname(os.path.abspath(__file__))
 
-    old_finalize = os.path.join(here, "_finalize_update.bat")
-    if os.path.exists(old_finalize):
-        try:
-            os.remove(old_finalize)
-        except OSError:
-            pass
+    apply_pending_update(here)
 
     url_config = os.path.join(here, "update_url.txt")
     base_url = BASE_URL
@@ -75,7 +83,12 @@ def main():
         else:
             fail += 1
 
-    self_update(here, base_url)
+    for archivo in SELF_UPDATE_FILES:
+        url = base_url.rstrip("/") + "/" + archivo
+        destino = os.path.join(here, archivo)
+        if archivo == "UPDATE.bat":
+            destino = destino + ".new"
+        download(url, destino)
 
     print()
     if fail == 0:
@@ -88,39 +101,6 @@ def main():
     print()
 
     input("Press ENTER to close...")
-
-def self_update(here, base_url):
-    finalize_path = os.path.join(here, "_finalize_update.bat")
-    needs_finalize = False
-
-    for archivo in SELF_UPDATE_FILES:
-        url = base_url.rstrip("/") + "/" + archivo
-        destino = os.path.join(here, archivo)
-        if archivo == "UPDATE.bat":
-            destino = destino + ".new"
-        if download(url, destino):
-            if archivo == "UPDATE.bat":
-                needs_finalize = True
-
-    if needs_finalize:
-        bat_new = os.path.join(here, "UPDATE.bat.new")
-        bat_old = os.path.join(here, "UPDATE.bat")
-        with open(finalize_path, "w", encoding="utf-8") as f:
-            f.write('@echo off\n')
-            f.write('timeout /t 2 /nobreak >nul\n')
-            f.write(f'del /f "{bat_old}" >nul 2>&1\n')
-            f.write(f'ren "{bat_new}" "UPDATE.bat" >nul 2>&1\n')
-            f.write(f'powershell -Command "Unblock-File \'{bat_old}\'" 2>nul\n')
-            f.write('exit\n')
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        startupinfo.wShowWindow = 0
-        subprocess.Popen(
-            ['cmd', '/c', finalize_path],
-            startupinfo=startupinfo,
-            close_fds=True
-        )
-        print("       [OK] UPDATE.bat (will swap after exit)")
 
 if __name__ == "__main__":
     main()
