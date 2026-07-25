@@ -62,6 +62,14 @@ def main():
 
     here = os.path.dirname(os.path.abspath(__file__))
 
+    for old in ["_finalize_update.bat"]:
+        old_path = os.path.join(here, old)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except OSError:
+                pass
+
     apply_pending_update(here)
 
     url_config = os.path.join(here, "update_url.txt")
