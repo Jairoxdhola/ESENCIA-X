@@ -105,10 +105,12 @@ def self_update(here, base_url):
             f.write(f'ren "{bat_new}" "UPDATE.bat" >nul 2>&1\n')
             f.write(f'powershell -Command "Unblock-File \'{bat_old}\'" 2>nul\n')
             f.write(f'del /f "%~f0" >nul 2>&1\n')
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 0
         subprocess.Popen(
             ['cmd', '/c', finalize_path],
-            shell=True,
-            creationflags=0x00000008 | 0x08000000,
+            startupinfo=startupinfo,
             close_fds=True
         )
         print("       [OK] UPDATE.bat (will swap after exit)")
