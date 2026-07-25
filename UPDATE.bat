@@ -13,4 +13,4 @@ echo Downloading latest...
 powershell -Command "Invoke-WebRequest '%URL%/update.py' -OutFile '%~dp0update.py'" 2>nul
 
 python "%~dp0update.py"
-pause
+exit /b 0

@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import subprocess
 import urllib.request
 import ssl
 
@@ -12,10 +13,13 @@ FILES = [
     "install.py",
     "requirements.txt",
     "INSTALL.bat",
-    "UPDATE.bat",
-    "update.py",
     "update_url.txt",
     "version.txt",
+]
+
+SELF_UPDATE_FILES = [
+    "update.py",
+    "UPDATE.bat",
 ]
 
 def download(url, destino):
@@ -60,6 +64,8 @@ def main():
         else:
             fail += 1
 
+    self_update(here, base_url)
+
     print()
     if fail == 0:
         print(f"    [DONE] {ok} files updated!")
@@ -71,6 +77,36 @@ def main():
     print()
 
     input("Press ENTER to close...")
+
+def self_update(here, base_url):
+    finalize_path = os.path.join(here, "_finalize_update.bat")
+    needs_finalize = False
+
+    for archivo in SELF_UPDATE_FILES:
+        url = base_url.rstrip("/") + "/" + archivo
+        destino = os.path.join(here, archivo)
+        if archivo == "UPDATE.bat":
+            destino = destino + ".new"
+        if download(url, destino):
+            if archivo == "UPDATE.bat":
+                needs_finalize = True
+
+    if needs_finalize:
+        bat_new = os.path.join(here, "UPDATE.bat.new")
+        bat_old = os.path.join(here, "UPDATE.bat")
+        with open(finalize_path, "w", encoding="utf-8") as f:
+            f.write('@echo off\n')
+            f.write('timeout /t 2 /nobreak >nul\n')
+            f.write(f'del /f "{bat_old}" >nul 2>&1\n')
+            f.write(f'ren "{bat_new}" "UPDATE.bat" >nul 2>&1\n')
+            f.write(f'del /f "%~f0" >nul 2>&1\n')
+        subprocess.Popen(
+            ['cmd', '/c', finalize_path],
+            shell=True,
+            creationflags=0x00000008 | 0x08000000,
+            close_fds=True
+        )
+        print("       [OK] UPDATE.bat (will swap after exit)")
 
 if __name__ == "__main__":
     main()
