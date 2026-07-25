@@ -30,6 +30,10 @@ def download(url, destino):
             data = resp.read().decode("utf-8")
         with open(destino, "w", encoding="utf-8") as f:
             f.write(data)
+        try:
+            os.remove(destino + ":Zone.Identifier")
+        except OSError:
+            pass
         print(f"       [OK] {os.path.basename(destino)}")
         return True
     except Exception as e:
@@ -99,6 +103,7 @@ def self_update(here, base_url):
             f.write('timeout /t 2 /nobreak >nul\n')
             f.write(f'del /f "{bat_old}" >nul 2>&1\n')
             f.write(f'ren "{bat_new}" "UPDATE.bat" >nul 2>&1\n')
+            f.write(f'powershell -Command "Unblock-File \'{bat_old}\'" 2>nul\n')
             f.write(f'del /f "%~f0" >nul 2>&1\n')
         subprocess.Popen(
             ['cmd', '/c', finalize_path],
