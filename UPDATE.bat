@@ -7,7 +7,7 @@ echo       ESENCIA X - MCP Updater
 echo    =========================================
 echo.
 
-set "URL=https://raw.githubusercontent.com/Jairoxdhola/esencia-xx/main"
+set "URL=https://raw.githubusercontent.com/Jairoxdhola/ESENCIA-X/main"
 
 echo Downloading latest...
 powershell -Command "Invoke-WebRequest '%URL%/update.py' -OutFile '%~dp0update.py'" 2>nul
