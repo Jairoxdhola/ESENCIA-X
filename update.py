@@ -49,6 +49,13 @@ def main():
 
     here = os.path.dirname(os.path.abspath(__file__))
 
+    old_finalize = os.path.join(here, "_finalize_update.bat")
+    if os.path.exists(old_finalize):
+        try:
+            os.remove(old_finalize)
+        except OSError:
+            pass
+
     url_config = os.path.join(here, "update_url.txt")
     base_url = BASE_URL
     if os.path.exists(url_config):
@@ -104,7 +111,7 @@ def self_update(here, base_url):
             f.write(f'del /f "{bat_old}" >nul 2>&1\n')
             f.write(f'ren "{bat_new}" "UPDATE.bat" >nul 2>&1\n')
             f.write(f'powershell -Command "Unblock-File \'{bat_old}\'" 2>nul\n')
-            f.write(f'del /f "%~f0" >nul 2>&1\n')
+            f.write('exit\n')
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = 0
